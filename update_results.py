@@ -7,9 +7,13 @@ url = "https://www.lotto.de/lotto-6aus49/lottozahlen"
 response = requests.get(url)
 soup = BeautifulSoup(response.text, 'html.parser')
 
-# Extract draw date (e.g., "Samstag, 29.03.2025" or similar)
-date_elem = soup.select_one('.drawing-result__date')  # Adjust selector
-date_str = datetime.strptime(date_elem.text.split(', ')[1], '%d.%m.%Y').strftime('%Y-%m-%d')  # e.g., '2025-03-29'
+# Extract draw date (try broader selector)
+date_elem = soup.find('div', class_='drawing-result')  # Parent container
+if date_elem:
+    date_text = date_elem.find('span', class_='date') or date_elem.find('div', class_='date')  # Sub-element
+    date_str = datetime.strptime(date_text.text.split(', ')[1], '%d.%m.%Y').strftime('%Y-%m-%d')  # e.g., '2025-03-29'
+else:
+    date_str = datetime.utcnow().strftime('%Y-%m-%d')  # Fallback
 
 # Extract numbers
 draw_section = soup.select_one('.drawing-result__numbers')

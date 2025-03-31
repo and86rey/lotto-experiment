@@ -1,0 +1,31 @@
+name: Generate Lotto Guess
+on:
+  workflow_dispatch:  # Manual trigger
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Install dependencies
+        run: pip install pandas numpy scikit-learn
+      - name: Run generator
+        run: python guess_generator.py > prediction.txt
+      - name: Update ai_guess.csv
+        run: |
+          echo "date,odds,super_number" > temp.csv
+          cat ai_guess.csv >> temp.csv
+          cat prediction.txt >> temp.csv
+          mv temp.csv ai_guess.csv
+      - name: Commit changes
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add ai_guess.csv
+          git commit -m "Update AI guess for $NEXT_DATE" || echo "No changes"
+          git push
+        env:
+          NEXT_DATE: ${{ github.event.inputs.next_date || '2025-04-02' }}

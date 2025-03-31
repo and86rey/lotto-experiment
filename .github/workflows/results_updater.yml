@@ -1,0 +1,27 @@
+name: Update Actual Results
+on:
+  schedule:
+    - cron: '0 20 * * 3,6'  # Runs 20:00 UTC Wed/Sat (21:00 CET)
+  workflow_dispatch:  # Also allow manual trigger
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 pandas
+      - name: Fetch and update results
+        run: python update_results.py
+      - name: Commit changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add actual_results.csv
+          git commit -m "Add actual results for $(date +%Y-%m-%d)" || echo "No changes"
+          git push
